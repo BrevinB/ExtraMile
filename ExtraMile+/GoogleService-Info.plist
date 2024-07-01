@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyBSX6JcO2VsXnrcwuVFdNV0djLZbJGaFMU</string>
+	<key>GCM_SENDER_ID</key>
+	<string>920913390338</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>co.brevinb.ExtraMile</string>
+	<key>PROJECT_ID</key>
+	<string>extramile-6403a</string>
+	<key>STORAGE_BUCKET</key>
+	<string>extramile-6403a.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:920913390338:ios:1f9ab1d7f358e8963b301b</string>
+</dict>
+</plist>
