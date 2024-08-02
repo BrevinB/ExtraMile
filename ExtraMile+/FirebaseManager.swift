@@ -74,4 +74,16 @@ import FirebaseAuth
             db.collection("RunEntry").addDocument(data: ["miles": miles, "time": time, "date": date, "profileId": profileId])
         }
     }
+    
+    func deleteAccount() {
+        let user = Auth.auth().currentUser
+
+        user?.delete { error in
+          if let error = error {
+            // An error happened.
+          } else {
+            // Account deleted.
+          }
+        }
+    }
 }
