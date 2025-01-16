@@ -147,6 +147,7 @@ struct AddNewEntry: View {
     @State private var date: Date = Date()
     @State private var speed = 0.0
     @State private var pace = ""
+    @State private var isShowingAlert = false
     
     let placeholder: String = "Miles"
     
@@ -188,11 +189,18 @@ struct AddNewEntry: View {
                 .padding(20)
             
             Button {
-                fbManager.addData(miles: Double(miles) ?? 0.0, time: time, date: date, profileId: Auth.auth().currentUser?.uid ?? "")
-                Task {
-                    await fbManager.fetchData(profileId: Auth.auth().currentUser?.uid ?? "")
+                if miles == "" || miles == "0" || miles == "0.0"{
+                    isShowingAlert = true
+                } else {
+                    fbManager.addData(miles: Double(miles) ?? 0.0, time: time, date: date, profileId: Auth.auth().currentUser?.uid ?? "")
+                    
+                    Task {
+                        await fbManager.fetchData(profileId: Auth.auth().currentUser?.uid ?? "")
+                    }
+                    dismiss()
                 }
-                dismiss()
+
+                
             } label: {
                 Text("Add Run")
                     .frame(maxWidth: 350)
@@ -201,6 +209,10 @@ struct AddNewEntry: View {
             .foregroundStyle(.primary)
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
+            .alert("Please enter miles", isPresented: $isShowingAlert) {
+                        Button("OK", role: .cancel) { isShowingAlert = false }
+            }
+            
         }
     }
     

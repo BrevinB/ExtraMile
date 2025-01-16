@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct HistoryView: View {
     @Environment(FirebaseManager.self) private var fbManager
+    @AppStorage("loginStatus") private var loginStatus: Bool = false
+    @State private var isShowingAlert: Bool = false
     
     var profileId: String = ""
     
@@ -21,21 +24,45 @@ struct HistoryView: View {
     
     var body: some View {
         VStack(spacing: 10) {
-            List(fbManager.runs) { run in
-                HStack {
-                    historyCardView(run: run)
-                    
-                    Button {
-                        Task {
-                            await fbManager.deleteRuns(documentId: run.documentId)
-                            await fbManager.fetchData(profileId: profileId)
+            VStack {
+                List(fbManager.runs) { run in
+                    HStack {
+                        historyCardView(run: run)
+                        
+                        Button {
+                            Task {
+                                await fbManager.deleteRuns(documentId: run.documentId)
+                                await fbManager.fetchData(profileId: profileId)
+                            }
+                        } label: {
+                            Image(systemName: "trash")
                         }
-                    } label: {
-                        Image(systemName: "trash")
+                        
                     }
-                    
                 }
             }
+            
+            Spacer()
+            
+            Button {
+                isShowingAlert = true
+            } label: {
+                Text("Delete Account")
+            }
+        }
+        .alert("Are you sure you want to delete account?", isPresented: $isShowingAlert) {
+            Button("Yes", role: .destructive) { isShowingAlert = false
+                fbManager.deleteAccount()
+                
+                do {
+                    try Auth.auth().signOut()
+                    loginStatus = false
+                } catch {
+                    print("Logout Error")
+                }
+            }
+            
+            Button("No", role: .cancel) { isShowingAlert = false }
         }
         
     }
