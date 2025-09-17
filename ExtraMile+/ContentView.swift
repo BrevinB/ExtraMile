@@ -73,7 +73,6 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle("ExtraMile")
         }
-        .ignoresSafeArea(.all)
         .sheet(isPresented: $showGoalCreator) {
             GoalEditorView()
         }
