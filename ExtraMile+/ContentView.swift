@@ -335,7 +335,7 @@ struct GoalProgressRow: View {
         HStack(alignment: .top, spacing: 16) {
             GoalProgressRing(progress: progress, label: progressText)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(goal.title)
                     .font(.headline)
                 Text(goal.intervalDescription)
@@ -344,6 +344,8 @@ struct GoalProgressRow: View {
                 Text(goal.kind.displayName)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+
+                RunnerProgressTrack(progress: progress)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Label("\(String(format: "%.2f", milesCompleted)) / \(String(format: "%.2f", goal.targetMiles)) mi", systemImage: "figure.run")
@@ -399,6 +401,38 @@ struct GoalProgressRing: View {
                 .bold()
         }
         .frame(width: 80, height: 80)
+    }
+}
+
+struct RunnerProgressTrack: View {
+    let progress: Double
+
+    private let trackLength = 50
+
+    private var clampedProgress: Double {
+        min(max(progress, 0), 1)
+    }
+
+    private var leadingDots: Int {
+        Int((clampedProgress * Double(trackLength)).rounded())
+    }
+
+    private var trailingDots: Int {
+        max(trackLength - leadingDots, 0)
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Text(String(repeating: ".", count: leadingDots))
+            Text(Image(systemName: "figure.run"))
+                .padding(.horizontal, 2)
+            Text(String(repeating: ".", count: trailingDots))
+            Text(Image(systemName: "rectangle.checkered"))
+                .padding(.leading, 2)
+        }
+        .font(.caption.monospaced())
+        .foregroundStyle(.yellow)
+        .animation(.easeInOut(duration: 0.4), value: leadingDots)
     }
 }
 
