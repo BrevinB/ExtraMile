@@ -16,6 +16,7 @@ struct ExtraMileApp: App {
     @AppStorage("lastVersion") private var lastVersion: String = ""
     
     var fbManager = FirebaseManager()
+    var goalStore = GoalStore()
     
     init() {
         if FirebaseApp.app() == nil {
@@ -29,6 +30,7 @@ struct ExtraMileApp: App {
                 if loginStatus {
                     ContentView()
                         .environment(fbManager)
+                        .environment(goalStore)
                 } else {
                     Login()
                 }
