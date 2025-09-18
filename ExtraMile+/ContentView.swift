@@ -326,49 +326,76 @@ struct GoalProgressRow: View {
     let progress: Double
     let streak: Int
 
+    private var clampedProgress: Double {
+        min(max(progress, 0), 1)
+    }
+
     private var progressText: String {
-        let percent = progress * 100
+        let percent = clampedProgress * 100
         return String(format: "%.0f%%", percent)
     }
 
+    private var mileageSummary: String {
+        "\(String(format: "%.2f", milesCompleted)) of \(String(format: "%.2f", goal.targetMiles)) mi"
+    }
+
+    private var remainingMiles: String {
+        let remaining = max(goal.targetMiles - milesCompleted, 0)
+        return "\(String(format: "%.2f", remaining)) mi to go"
+    }
+
+    private var streakText: String {
+        streak == 1 ? "1 day streak" : "\(streak) day streak"
+    }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            GoalProgressRing(progress: progress, label: progressText)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text(goal.title)
-                    .font(.headline)
-                Text(goal.intervalDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(goal.kind.displayName)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-
-                RunnerProgressTrack(progress: progress)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("\(String(format: "%.2f", milesCompleted)) / \(String(format: "%.2f", goal.targetMiles)) mi", systemImage: "figure.run")
-                        .font(.subheadline)
-                    Label("\(streak) day streak", systemImage: "flame.fill")
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(goal.title)
+                        .font(.headline)
+                    Text(goal.intervalDescription)
                         .font(.caption)
-                        .foregroundStyle(streak > 0 ? .orange : .secondary)
+                        .foregroundStyle(.secondary)
+                    Text(goal.kind.displayName)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
 
-                if progress >= 1 {
-                    Text("Goal complete! Keep the streak alive.")
-                        .font(.caption2)
-                        .foregroundStyle(.yellow)
-                        .padding(.top, 4)
-                }
+                Spacer()
+
+                GoalProgressRing(progress: clampedProgress, label: progressText)
             }
 
-            Spacer()
+            RunnerProgressTrack(progress: clampedProgress)
+
+            VStack(alignment: .leading, spacing: 12) {
+                GoalMetricRow(icon: "figure.run", title: "Completed", value: mileageSummary)
+
+                GoalMetricRow(icon: "flag.checkered", title: "Remaining", value: remainingMiles)
+
+                GoalMetricRow(
+                    icon: "flame.fill",
+                    title: "Streak",
+                    value: streakText,
+                    valueTint: streak > 0 ? .orange : .secondary.opacity(0.8)
+                )
+            }
+
+            if clampedProgress >= 1 {
+                Label("Goal complete! Keep the streak alive.", systemImage: "sparkles")
+                    .font(.caption2)
+                    .foregroundStyle(.yellow)
+            }
         }
-        .padding()
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemGray6))
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color(.systemGray4).opacity(0.35))
+                )
         )
     }
 }
@@ -377,30 +404,49 @@ struct GoalProgressRing: View {
     let progress: Double
     let label: String
 
-    private var normalizedProgress: Double {
-        min(max(progress, 0), 1)
-    }
-
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color(.systemGray5), lineWidth: 10)
+                .strokeBorder(Color(.systemGray4).opacity(0.4), lineWidth: 8)
             Circle()
-                .trim(from: 0, to: normalizedProgress)
+                .trim(from: 0, to: progress)
                 .stroke(
-                    .linearGradient(
-                        colors: [.yellow.opacity(0.8), .yellow],
-                        startPoint: .top,
-                        endPoint: .bottom
+                    .angularGradient(
+                        colors: [.yellow.opacity(0.9), .yellow, .orange.opacity(0.9)],
+                        center: .center
                     ),
-                    style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
             Text(label)
-                .font(.caption)
+                .font(.caption.monospacedDigit())
                 .bold()
         }
-        .frame(width: 80, height: 80)
+        .frame(width: 74, height: 74)
+    }
+}
+
+struct GoalMetricRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    var valueTint: Color = .primary
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.yellow)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(valueTint)
+            }
+        }
     }
 }
 
