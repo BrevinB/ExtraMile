@@ -321,6 +321,8 @@ struct AddNewEntry: View {
 }
 
 struct GoalProgressRow: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let goal: GoalModel
     let milesCompleted: Double
     let progress: Double
@@ -349,65 +351,127 @@ struct GoalProgressRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(goal.title)
-                        .font(.headline)
+                        .font(.title3.weight(.semibold))
                     Text(goal.intervalDescription)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.yellow.opacity(0.85))
                     Text(goal.kind.displayName)
-                        .font(.caption2)
+                        .font(.caption2.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                GoalProgressRing(progress: clampedProgress, label: progressText)
+                GoalProgressRing(progress: clampedProgress, label: progressText, diameter: 88, lineWidth: 9)
             }
 
+            Text("\(progressText) Complete")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(.yellow)
+                .contentTransition(.numericText())
+
             RunnerProgressTrack(progress: clampedProgress)
+                .padding(.vertical, 4)
 
-            VStack(alignment: .leading, spacing: 12) {
-                GoalMetricRow(icon: "figure.run", title: "Completed", value: mileageSummary)
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    GoalMetricRow(icon: "figure.run", title: "Completed", value: mileageSummary, valueTint: primaryMetricTint)
+                        .metricContainer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                GoalMetricRow(icon: "flag.checkered", title: "Remaining", value: remainingMiles)
+                    GoalMetricRow(icon: "flag.checkered", title: "Remaining", value: remainingMiles, valueTint: primaryMetricTint)
+                        .metricContainer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
                 GoalMetricRow(
                     icon: "flame.fill",
                     title: "Streak",
                     value: streakText,
-                    valueTint: streak > 0 ? .orange : .secondary.opacity(0.8)
+                    valueTint: streakTint
                 )
+                .metricContainer(fullWidth: true)
             }
 
             if clampedProgress >= 1 {
                 Label("Goal complete! Keep the streak alive.", systemImage: "sparkles")
-                    .font(.caption2)
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(.yellow)
+                    .padding(.top, 4)
             }
         }
-        .padding(20)
+        .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color(.systemGray4).opacity(0.35))
+                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                        .stroke(borderColor, lineWidth: 1)
                 )
         )
+        .shadow(color: shadowColor, radius: 18, x: 0, y: colorScheme == .dark ? 12 : 8)
+    }
+
+    private var cardBackground: LinearGradient {
+        if colorScheme == .dark {
+            return LinearGradient(
+                colors: [
+                    Color(.sRGB, red: 0.08, green: 0.08, blue: 0.08, opacity: 1),
+                    Color(.sRGB, red: 0.12, green: 0.12, blue: 0.12, opacity: 1),
+                    Color(.sRGB, red: 0.16, green: 0.16, blue: 0.16, opacity: 1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+
+        return LinearGradient(
+            colors: [
+                Color(.sRGB, red: 0.99, green: 0.99, blue: 0.97, opacity: 1),
+                Color(.sRGB, red: 0.97, green: 0.97, blue: 0.94, opacity: 1),
+                Color(.sRGB, red: 0.94, green: 0.94, blue: 0.9, opacity: 1)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var borderColor: Color {
+        colorScheme == .dark ? Color.yellow.opacity(0.15) : Color.black.opacity(0.08)
+    }
+
+    private var shadowColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.35) : Color.black.opacity(0.1)
+    }
+
+    private var primaryMetricTint: Color {
+        colorScheme == .dark ? .white : .black
+    }
+
+    private var streakTint: Color {
+        if streak > 0 {
+            return .orange
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.45)
     }
 }
 
 struct GoalProgressRing: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let progress: Double
     let label: String
+    var diameter: CGFloat = 74
+    var lineWidth: CGFloat = 8
 
     var body: some View {
         ZStack {
             Circle()
-                .strokeBorder(Color(.systemGray4).opacity(0.4), lineWidth: 8)
+                .strokeBorder(trackColor, lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
@@ -415,18 +479,24 @@ struct GoalProgressRing: View {
                         colors: [.yellow.opacity(0.9), .yellow, .orange.opacity(0.9)],
                         center: .center
                     ),
-                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
             Text(label)
                 .font(.caption.monospacedDigit())
                 .bold()
         }
-        .frame(width: 74, height: 74)
+        .frame(width: diameter, height: diameter)
+    }
+
+    private var trackColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.1)
     }
 }
 
 struct GoalMetricRow: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let icon: String
     let title: String
     let value: String
@@ -441,19 +511,23 @@ struct GoalMetricRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(titleColor)
                 Text(value)
                     .font(.callout.weight(.semibold))
                     .foregroundStyle(valueTint)
             }
         }
     }
+
+    private var titleColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6)
+    }
 }
 
 struct RunnerProgressTrack: View {
     let progress: Double
 
-    private let trackLength = 50
+    private let trackLength = 48
 
     private var clampedProgress: Double {
         min(max(progress, 0), 1)
@@ -479,6 +553,33 @@ struct RunnerProgressTrack: View {
         .font(.caption.monospaced())
         .foregroundStyle(.yellow)
         .animation(.easeInOut(duration: 0.4), value: leadingDots)
+    }
+}
+
+private extension View {
+    func metricContainer(fullWidth: Bool = false) -> some View {
+        modifier(MetricContainerModifier(fullWidth: fullWidth))
+    }
+}
+
+private struct MetricContainerModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var fullWidth: Bool
+
+    func body(content: Content) -> some View {
+        let background = colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.05)
+        let border = colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
+
+        return content
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(background, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(border, lineWidth: 1)
+            )
+            .frame(maxWidth: fullWidth ? .infinity : nil, alignment: .leading)
     }
 }
 
