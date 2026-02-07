@@ -60,8 +60,8 @@ struct ContentView: View {
                         .padding(.top, 4)
                 }
 
-                // Main progress ring
-                progressRingSection
+                // Hero: Runner on track toward goal
+                runnerTrackSection
 
                 // Streak & weekly summary
                 quickStatsRow
@@ -95,60 +95,99 @@ struct ContentView: View {
         .navigationTitle("ExtraMile")
     }
 
-    // MARK: - Progress Ring
+    // MARK: - Runner Track (Hero Element)
 
     @ViewBuilder
-    private var progressRingSection: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                // Background ring
-                Circle()
-                    .stroke(Color.yellow.opacity(0.15), lineWidth: 14)
-                    .frame(width: 180, height: 180)
+    private var runnerTrackSection: some View {
+        VStack(spacing: 16) {
+            // Percentage headline
+            Text("\(String(format: "%.1f", min(percentComplete * 100, 100)))%")
+                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .foregroundStyle(.yellow)
+                .contentTransition(.numericText())
+                .animation(.default, value: percentComplete)
 
-                // Progress ring
-                Circle()
-                    .trim(from: 0, to: min(percentComplete, 1.0))
-                    .stroke(
-                        Color.yellow.gradient,
-                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
-                    )
-                    .frame(width: 180, height: 180)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeInOut(duration: 0.8), value: percentComplete)
+            Text("\(String(format: "%.1f", currentMiles)) mi of \(mileageGoal) mi")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .contentTransition(.numericText())
 
-                // Center content
-                VStack(spacing: 4) {
-                    Text("\(String(format: "%.1f", min(percentComplete * 100, 100)))%")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .contentTransition(.numericText())
-                        .animation(.default, value: percentComplete)
+            // The signature runner track
+            GeometryReader { geo in
+                let trackWidth = geo.size.width - 48
+                let clampedProgress = min(max(CGFloat(percentComplete), 0), 1.0)
+                let runnerX = clampedProgress * trackWidth
 
-                    Text("\(String(format: "%.1f", currentMiles)) mi")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
+                ZStack(alignment: .leading) {
+                    // Road background
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(height: 10)
+                        .padding(.horizontal, 24)
+
+                    // Road dashes (center line markings)
+                    HStack(spacing: 12) {
+                        ForEach(0..<16, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(Color.yellow.opacity(0.15))
+                                .frame(width: 12, height: 2)
+                        }
+                    }
+                    .padding(.horizontal, 28)
+
+                    // Progress fill
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.yellow.gradient)
+                        .frame(width: max(0, runnerX), height: 10)
+                        .padding(.leading, 24)
+                        .animation(.easeInOut(duration: 0.8), value: percentComplete)
+
+                    // Mile markers
+                    ForEach([0.25, 0.5, 0.75], id: \.self) { marker in
+                        VStack(spacing: 2) {
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(Color.yellow.opacity(0.3))
+                                .frame(width: 2, height: 8)
+                            Text("\(Int(Double(mileageGoal) * marker))")
+                                .font(.system(size: 8))
+                                .foregroundStyle(.secondary)
+                        }
+                        .offset(x: 24 + CGFloat(marker) * trackWidth - 1, y: 12)
+                    }
+
+                    // Runner figure
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 32, weight: .semibold))
+                        .foregroundStyle(.yellow)
+                        .offset(x: 24 + runnerX - 8, y: -24)
+                        .animation(.easeInOut(duration: 0.8), value: percentComplete)
+
+                    // Checkered flag at finish
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.yellow)
+                        .offset(x: 24 + trackWidth - 4, y: -20)
                 }
             }
+            .frame(height: 60)
+            .padding(.vertical, 8)
 
-            Text("of \(mileageGoal) mi goal")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            // Text-based progress bar
-            HStack(spacing: 0) {
-                Text(String(repeating: ".", count: calcDistance(currentMiles, mileageGoal)))
-                    .foregroundStyle(.yellow)
-                Image(systemName: "figure.run")
-                    .foregroundStyle(.yellow)
-                Text(String(repeating: ".", count: max(0, 50 - calcDistance(currentMiles, mileageGoal))))
-                    .foregroundStyle(.yellow.opacity(0.3))
-                Image(systemName: "flag.checkered")
-                    .foregroundStyle(.yellow)
+            // Start / Finish labels
+            HStack {
+                Text("Start")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text("\(mileageGoal) mi")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
-            .font(.caption2)
+            .padding(.horizontal, 24)
         }
-        .padding(.top, 8)
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .padding(.horizontal)
+        .padding(.top, 4)
     }
 
     // MARK: - Quick Stats Row
@@ -204,19 +243,35 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
 
+            // Mini runner track for weekly goal
             GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.yellow.opacity(0.15))
-                        .frame(height: 10)
+                let trackWidth = geo.size.width
+                let clampedProgress = min(max(CGFloat(weekProgress), 0), 1.0)
+                let runnerX = clampedProgress * trackWidth
 
-                    RoundedRectangle(cornerRadius: 6)
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.yellow.opacity(0.15))
+                        .frame(height: 8)
+
+                    RoundedRectangle(cornerRadius: 5)
                         .fill(Color.yellow.gradient)
-                        .frame(width: min(CGFloat(weekProgress) * geo.size.width, geo.size.width), height: 10)
+                        .frame(width: max(0, runnerX), height: 8)
                         .animation(.easeInOut, value: weekProgress)
+
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.yellow)
+                        .offset(x: max(0, runnerX - 6), y: -14)
+                        .animation(.easeInOut, value: weekProgress)
+
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.yellow.opacity(0.6))
+                        .offset(x: trackWidth - 10, y: -12)
                 }
             }
-            .frame(height: 10)
+            .frame(height: 28)
 
             if weekProgress >= 1.0 {
                 HStack {
@@ -268,12 +323,6 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Helpers
-
-    func calcDistance(_ currentMiles: Double, _ goalAmount: Int) -> Int {
-        let percent = Double(currentMiles) / Double(goalAmount)
-        return min(50, Int(round(50.0 * Double(percent))))
-    }
 }
 
 // MARK: - Subviews

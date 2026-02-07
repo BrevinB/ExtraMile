@@ -176,7 +176,7 @@ struct AchievementsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Summary header
+                // Summary header with runner branding
                 VStack(spacing: 8) {
                     Text("\(unlockedCount) of \(achievements.count)")
                         .font(.largeTitle)
@@ -186,9 +186,34 @@ struct AchievementsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    ProgressView(value: Double(unlockedCount), total: Double(achievements.count))
-                        .tint(.yellow)
-                        .padding(.horizontal, 40)
+                    // Runner track for achievement progress
+                    GeometryReader { geo in
+                        let trackWidth = geo.size.width
+                        let progress = CGFloat(unlockedCount) / CGFloat(achievements.count)
+                        let runnerX = progress * trackWidth
+
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color.yellow.opacity(0.15))
+                                .frame(height: 8)
+
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color.yellow.gradient)
+                                .frame(width: max(0, runnerX), height: 8)
+
+                            Image(systemName: "figure.run")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.yellow)
+                                .offset(x: max(0, runnerX - 6), y: -16)
+
+                            Image(systemName: "flag.checkered")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.yellow.opacity(0.6))
+                                .offset(x: trackWidth - 10, y: -14)
+                        }
+                    }
+                    .frame(height: 30)
+                    .padding(.horizontal, 40)
                 }
                 .padding(.top)
 

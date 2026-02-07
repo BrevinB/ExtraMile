@@ -18,9 +18,24 @@ struct StatsView: View {
         case allTime = "All Time"
     }
 
+    @AppStorage("mileageGoal") private var mileageGoal: Int = 365
+
+    private var totalMiles: Double {
+        fbManager.totalMiles
+    }
+
+    private var percentComplete: Double {
+        guard mileageGoal > 0 else { return 0 }
+        return totalMiles / Double(mileageGoal)
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                // Mini runner track for goal progress
+                miniRunnerTrack
+                    .padding(.horizontal)
+
                 // Period picker
                 Picker("Period", selection: $selectedPeriod) {
                     ForEach(StatsPeriod.allCases, id: \.self) { period in
@@ -45,6 +60,54 @@ struct StatsView: View {
             .padding(.vertical)
         }
         .navigationTitle("Stats")
+    }
+
+    // MARK: - Mini Runner Track
+
+    @ViewBuilder
+    private var miniRunnerTrack: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("\(String(format: "%.1f", totalMiles)) mi")
+                    .font(.headline)
+                    .bold()
+                Spacer()
+                Text("Goal: \(mileageGoal) mi")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            GeometryReader { geo in
+                let trackWidth = geo.size.width
+                let clampedProgress = min(max(CGFloat(percentComplete), 0), 1.0)
+                let runnerX = clampedProgress * trackWidth
+
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.yellow.opacity(0.15))
+                        .frame(height: 8)
+
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.yellow.gradient)
+                        .frame(width: max(0, runnerX), height: 8)
+                        .animation(.easeInOut(duration: 0.6), value: percentComplete)
+
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.yellow)
+                        .offset(x: max(0, runnerX - 6), y: -16)
+                        .animation(.easeInOut(duration: 0.6), value: percentComplete)
+
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.yellow.opacity(0.6))
+                        .offset(x: trackWidth - 10, y: -14)
+                }
+            }
+            .frame(height: 30)
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 
     // MARK: - Summary Cards
