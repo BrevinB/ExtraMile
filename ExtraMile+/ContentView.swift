@@ -114,32 +114,36 @@ struct ContentView: View {
 
             // The signature runner track
             GeometryReader { geo in
-                let trackWidth = geo.size.width - 48
+                let trackInset: CGFloat = 24
+                let trackWidth = geo.size.width - trackInset * 2
                 let clampedProgress = min(max(CGFloat(percentComplete), 0), 1.0)
                 let runnerX = clampedProgress * trackWidth
+                let dashCount = max(1, Int(trackWidth / 24))
 
                 ZStack(alignment: .leading) {
                     // Road background
                     RoundedRectangle(cornerRadius: 5)
                         .fill(Color.gray.opacity(0.15))
-                        .frame(height: 10)
-                        .padding(.horizontal, 24)
+                        .frame(width: trackWidth, height: 10)
+                        .offset(x: trackInset)
 
                     // Road dashes (center line markings)
                     HStack(spacing: 12) {
-                        ForEach(0..<16, id: \.self) { _ in
+                        ForEach(0..<dashCount, id: \.self) { _ in
                             RoundedRectangle(cornerRadius: 1)
                                 .fill(Color.yellow.opacity(0.15))
                                 .frame(width: 12, height: 2)
                         }
                     }
-                    .padding(.horizontal, 28)
+                    .frame(width: trackWidth)
+                    .clipped()
+                    .offset(x: trackInset)
 
                     // Progress fill
                     RoundedRectangle(cornerRadius: 5)
                         .fill(Color.yellow.gradient)
                         .frame(width: max(0, runnerX), height: 10)
-                        .padding(.leading, 24)
+                        .offset(x: trackInset)
                         .animation(.easeInOut(duration: 0.8), value: percentComplete)
 
                     // Mile markers
@@ -152,21 +156,21 @@ struct ContentView: View {
                                 .font(.system(size: 8))
                                 .foregroundStyle(.secondary)
                         }
-                        .offset(x: 24 + CGFloat(marker) * trackWidth - 1, y: 12)
+                        .offset(x: trackInset + CGFloat(marker) * trackWidth - 1, y: 12)
                     }
 
                     // Runner figure
                     Image(systemName: "figure.run")
                         .font(.system(size: 32, weight: .semibold))
                         .foregroundStyle(.yellow)
-                        .offset(x: 24 + runnerX - 8, y: -24)
+                        .offset(x: trackInset + runnerX - 8, y: -24)
                         .animation(.easeInOut(duration: 0.8), value: percentComplete)
 
                     // Checkered flag at finish
                     Image(systemName: "flag.checkered")
                         .font(.system(size: 22))
                         .foregroundStyle(.yellow)
-                        .offset(x: 24 + trackWidth - 4, y: -20)
+                        .offset(x: trackInset + trackWidth - 11, y: -20)
                 }
             }
             .frame(height: 60)
@@ -421,116 +425,115 @@ struct RecentRunCard: View {
 struct AddNewEntry: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(FirebaseManager.self) private var fbManager
+    @Environment(PurchaseManager.self) private var purchaseManager
     @State private var miles = ""
-    @State private var time: Int = 540
+    @State private var hours: Int = 0
+    @State private var minutes: Int = 0
+    @State private var seconds: Int = 0
     @State private var date: Date = Date()
     @State private var notes: String = ""
     @State private var isShowingAlert = false
+    @State private var showPaywall = false
+    @FocusState private var focusedField: Field?
 
-    let placeholder: String = "Miles"
+    private enum Field { case miles, notes }
 
-    @State private var width = CGFloat.zero
-    @State private var labelWidth = CGFloat.zero
+    private var totalSeconds: Int {
+        hours * 3600 + minutes * 60 + seconds
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    TextField("Miles", text: $miles)
-                        .keyboardType(.decimalPad)
-                        .foregroundColor(.gray)
-                        .font(.system(size: 20))
-                        .padding(EdgeInsets(top: 15, leading: 10, bottom: 15, trailing: 10))
-                        .background {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 5)
-                                    .trim(from: 0, to: 0.55)
-                                    .stroke(.gray, lineWidth: 1)
-                                RoundedRectangle(cornerRadius: 5)
-                                    .trim(from: 0.565 + (0.44 * (labelWidth / width)), to: 1)
-                                    .stroke(.gray, lineWidth: 1)
-                                Text(placeholder)
-                                    .foregroundColor(.gray)
-                                    .overlay( GeometryReader { geo in Color.clear.onAppear { labelWidth = geo.size.width }})
-                                    .padding(2)
-                                    .font(.caption)
-                                    .frame(maxWidth: .infinity,
-                                           maxHeight: .infinity,
-                                           alignment: .topLeading)
-                                    .offset(x: 20, y: -10)
-                            }
+                VStack(spacing: 16) {
+                    // Distance
+                    inputSection("Distance") {
+                        HStack(spacing: 4) {
+                            TextField("0.00", text: $miles)
+                                .keyboardType(.decimalPad)
+                                .focused($focusedField, equals: .miles)
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .multilineTextAlignment(.center)
+                            Text("mi")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
                         }
-                        .overlay( GeometryReader { geo in Color.clear.onAppear { width = geo.size.width }})
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-
-                    TimePickerView(seconds: $time)
-
-                    DatePicker("Date:", selection: $date)
-                        .padding(.horizontal, 20)
-
-                    // Notes field
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Notes (optional)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 20)
-
-                        TextField("How was your run?", text: $notes, axis: .vertical)
-                            .lineLimit(3...5)
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                            .padding(.horizontal, 20)
+                        .frame(maxWidth: .infinity)
                     }
 
-                    // Pace preview
-                    if let milesVal = Double(miles), milesVal > 0, time > 0 {
-                        HStack(spacing: 16) {
-                            VStack {
-                                Text("Pace")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Text("\(FirebaseManager.formatPace(seconds: Int(Double(time) / milesVal))) /mi")
-                                    .font(.subheadline)
-                                    .bold()
-                            }
-                            VStack {
-                                Text("Speed")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Text("\(String(format: "%.2f", milesVal / (Double(time) / 3600.0))) mph")
-                                    .font(.subheadline)
-                                    .bold()
-                            }
-                            VStack {
-                                Text("Calories (est)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Text("~\(Int(milesVal * 100))")
-                                    .font(.subheadline)
-                                    .bold()
-                            }
+                    // Duration
+                    inputSection("Duration") {
+                        HStack(spacing: 0) {
+                            durationWheel(value: $hours, label: "h", count: 24)
+                            Text(":")
+                                .font(.title2.bold())
+                                .foregroundStyle(.secondary)
+                            durationWheel(value: $minutes, label: "m", count: 60)
+                            Text(":")
+                                .font(.title2.bold())
+                                .foregroundStyle(.secondary)
+                            durationWheel(value: $seconds, label: "s", count: 60)
                         }
-                        .padding()
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 20)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 120)
                     }
 
+                    // Date & Time
+                    inputSection("Date & Time") {
+                        DatePicker("", selection: $date)
+                            .labelsHidden()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    // Notes
+                    if purchaseManager.isPremium {
+                        inputSection("Notes (optional)") {
+                            TextField("How was your run?", text: $notes, axis: .vertical)
+                                .focused($focusedField, equals: .notes)
+                                .lineLimit(3...5)
+                        }
+                    } else {
+                        inputSection("Notes") {
+                            Button {
+                                showPaywall = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.yellow)
+                                    Text("Upgrade to Premium to add notes")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
+
+                    // Live preview
+                    if let milesVal = Double(miles), milesVal > 0, totalSeconds > 0 {
+                        HStack(spacing: 0) {
+                            previewStat("Pace", value: "\(FirebaseManager.formatPace(seconds: Int(Double(totalSeconds) / milesVal))) /mi")
+                            previewStat("Speed", value: "\(String(format: "%.1f", milesVal / (Double(totalSeconds) / 3600.0))) mph")
+                            previewStat("Cal (est)", value: "~\(Int(milesVal * 100))")
+                        }
+                        .padding(.vertical, 12)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal)
+                    }
+
+                    // Add Run button
                     Button {
-                        if miles == "" || miles == "0" || miles == "0.0" {
+                        if miles.isEmpty || miles == "0" || miles == "0.0" {
                             isShowingAlert = true
                         } else {
                             fbManager.addData(
                                 miles: Double(miles) ?? 0.0,
-                                time: time,
+                                time: totalSeconds,
                                 date: date,
                                 profileId: Auth.auth().currentUser?.uid ?? "",
                                 notes: notes
                             )
-
                             Task {
                                 await fbManager.fetchData(profileId: Auth.auth().currentUser?.uid ?? "")
                             }
@@ -538,27 +541,82 @@ struct AddNewEntry: View {
                         }
                     } label: {
                         Text("Add Run")
-                            .frame(maxWidth: 350)
+                            .font(.headline)
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
                     }
-                    .foregroundStyle(.primary)
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .alert("Please enter miles", isPresented: $isShowingAlert) {
-                        Button("OK", role: .cancel) { isShowingAlert = false }
-                    }
+                    .background(Color.yellow, in: Capsule())
+                    .padding(.horizontal)
+                    .padding(.top, 8)
                 }
+                .padding(.top, 8)
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("New Run")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundStyle(.yellow)
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(.yellow)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { focusedField = nil }
+                        .fontWeight(.semibold)
                 }
             }
+            .alert("Please enter miles", isPresented: $isShowingAlert) {
+                Button("OK", role: .cancel) { isShowingAlert = false }
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
         }
+    }
+
+    // MARK: - Components
+
+    private func inputSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+
+            content()
+                .padding()
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        }
+        .padding(.horizontal)
+    }
+
+    private func durationWheel(value: Binding<Int>, label: String, count: Int) -> some View {
+        HStack(spacing: 2) {
+            Picker("", selection: value) {
+                ForEach(0..<count, id: \.self) { n in
+                    Text("\(n)").tag(n)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 60)
+
+            Text(label)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 12)
+        }
+    }
+
+    private func previewStat(_ title: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.bold())
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

@@ -10,11 +10,13 @@ import FirebaseAuth
 
 struct HistoryView: View {
     @Environment(FirebaseManager.self) private var fbManager
+    @Environment(PurchaseManager.self) private var purchaseManager
     @AppStorage("loginStatus") private var loginStatus: Bool = false
     @State private var searchText: String = ""
     @State private var sortOrder: SortOrder = .newest
     @State private var editingNoteRun: RunModel?
     @State private var editedNotes: String = ""
+    @State private var showPaywall = false
 
     var profileId: String = ""
 
@@ -26,11 +28,20 @@ struct HistoryView: View {
     }
 
     private var sortedRuns: [RunModel] {
+        // Free users only see last 30 days
+        let baseRuns: [RunModel]
+        if purchaseManager.isPremium {
+            baseRuns = fbManager.runs
+        } else {
+            let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+            baseRuns = fbManager.runs.filter { $0.date >= thirtyDaysAgo }
+        }
+
         let filtered: [RunModel]
         if searchText.isEmpty {
-            filtered = fbManager.runs
+            filtered = baseRuns
         } else {
-            filtered = fbManager.runs.filter { run in
+            filtered = baseRuns.filter { run in
                 let milesStr = String(format: "%.2f", run.miles)
                 return milesStr.contains(searchText) ||
                     run.notes.localizedCaseInsensitiveContains(searchText) ||
@@ -153,8 +164,12 @@ struct HistoryView: View {
                                 }
                                 .swipeActions(edge: .leading) {
                                     Button {
-                                        editingNoteRun = run
-                                        editedNotes = run.notes
+                                        if purchaseManager.isPremium {
+                                            editingNoteRun = run
+                                            editedNotes = run.notes
+                                        } else {
+                                            showPaywall = true
+                                        }
                                     } label: {
                                         Label("Note", systemImage: "pencil")
                                     }
@@ -171,12 +186,42 @@ struct HistoryView: View {
                             }
                         }
                     }
+
+                    // Upsell banner for free users
+                    if !purchaseManager.isPremium {
+                        Section {
+                            Button {
+                                showPaywall = true
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.title3)
+                                        .foregroundStyle(.yellow)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Unlock Full History")
+                                            .font(.subheadline.bold())
+                                            .foregroundStyle(.primary)
+                                        Text("You're viewing the last 30 days. Go Premium to see all your runs.")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "lock.fill")
+                                        .foregroundStyle(.yellow)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                    }
                 }
                 .listStyle(.insetGrouped)
             }
             .searchable(text: $searchText, prompt: "Search runs...")
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
             .sheet(item: $editingNoteRun) { run in
                 EditNotesSheet(
                     notes: $editedNotes,

@@ -9,6 +9,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import StoreKit
+import RevenueCat
 
 @main
 struct ExtraMileApp: App {
@@ -17,11 +18,15 @@ struct ExtraMileApp: App {
     @AppStorage("lastVersion") private var lastVersion: String = ""
 
     var fbManager = FirebaseManager()
+    var purchaseManager: PurchaseManager
 
     init() {
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
         }
+
+        Purchases.configure(withAPIKey: "appl_GCVlGnNxIfTaHpDtWKbCmNzUjHb")
+        purchaseManager = PurchaseManager()
 
         // Customize tab bar appearance
         let tabAppearance = UITabBarAppearance()
@@ -35,6 +40,7 @@ struct ExtraMileApp: App {
             if loginStatus {
                 MainTabView()
                     .environment(fbManager)
+                    .environment(purchaseManager)
                     .onAppear {
                         incrementLaunchCount()
                     }
