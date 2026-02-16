@@ -14,9 +14,10 @@ import RevenueCat
 @main
 struct ExtraMileApp: App {
     @AppStorage("loginStatus") private var loginStatus: Bool = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("launchCount") private var launchCount: Int = 0
     @AppStorage("lastVersion") private var lastVersion: String = ""
-
+    
     var fbManager = FirebaseManager()
     var purchaseManager: PurchaseManager
 
@@ -40,6 +41,12 @@ struct ExtraMileApp: App {
             if loginStatus {
                 MainTabView()
                     .environment(fbManager)
+                    .environment(purchaseManager)
+                    .onAppear {
+                        incrementLaunchCount()
+                    }
+            } else if !hasCompletedOnboarding {
+                OnboardingView()
                     .environment(purchaseManager)
                     .onAppear {
                         incrementLaunchCount()

@@ -22,6 +22,8 @@
 		23A1B0012F3A000000000001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 23A1B0002F3A000000000001 /* RevenueCat */; };
 		23A1B0032F3A000000000002 /* PurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B0022F3A000000000002 /* PurchaseManager.swift */; };
 		23A1B0052F3A000000000003 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B0042F3A000000000003 /* PaywallView.swift */; };
+		23A1B0092F3A000000000005 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B0082F3A000000000005 /* OnboardingView.swift */; };
+		23C6F2D72F43D3D700631E87 /* Icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 23C6F2D62F43D3D700631E87 /* Icon.icon */; };
 		23CA99FE2C3224E300391A20 /* Login.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CA99FD2C3224E300391A20 /* Login.swift */; };
 		23D210092B45C2F20019F250 /* ExtraMileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D210082B45C2F20019F250 /* ExtraMileApp.swift */; };
 		23D2100B2B45C2F20019F250 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D2100A2B45C2F20019F250 /* ContentView.swift */; };
@@ -41,6 +43,8 @@
 		2390059A2F38ECE900F5334C /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
 		23A1B0022F3A000000000002 /* PurchaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseManager.swift; sourceTree = "<group>"; };
 		23A1B0042F3A000000000003 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		23A1B0082F3A000000000005 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		23C6F2D62F43D3D700631E87 /* Icon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Icon.icon; sourceTree = "<group>"; };
 		23CA99FD2C3224E300391A20 /* Login.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Login.swift; sourceTree = "<group>"; };
 		23CA99FF2C32563F00391A20 /* ExtraMile+.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = "ExtraMile+.entitlements"; path = "ExtraMile+/ExtraMile+.entitlements"; sourceTree = "<group>"; };
 		23D210052B45C2F20019F250 /* ExtraMile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExtraMile.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -104,6 +108,7 @@
 		23D210072B45C2F20019F250 /* ExtraMile */ = {
 			isa = PBXGroup;
 			children = (
+				23C6F2D62F43D3D700631E87 /* Icon.icon */,
 				23EFF3CC2C331F9D00FD3D4B /* GoogleService-Info.plist */,
 				23D210082B45C2F20019F250 /* ExtraMileApp.swift */,
 				23D2100A2B45C2F20019F250 /* ContentView.swift */,
@@ -114,6 +119,7 @@
 				23A1B0022F3A000000000002 /* PurchaseManager.swift */,
 				23A1B0042F3A000000000003 /* PaywallView.swift */,
 				23CA99FD2C3224E300391A20 /* Login.swift */,
+				23A1B0082F3A000000000005 /* OnboardingView.swift */,
 				23D2100C2B45C2F30019F250 /* Assets.xcassets */,
 				23D2100E2B45C2F30019F250 /* Preview Content */,
 			);
@@ -201,6 +207,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				23D210102B45C2F30019F250 /* Preview Assets.xcassets in Resources */,
+				23C6F2D72F43D3D700631E87 /* Icon.icon in Resources */,
 				23D2100D2B45C2F30019F250 /* Assets.xcassets in Resources */,
 				23EFF3CD2C331F9D00FD3D4B /* GoogleService-Info.plist in Resources */,
 			);
@@ -224,6 +231,7 @@
 				23D210092B45C2F20019F250 /* ExtraMileApp.swift in Sources */,
 				23A1B0032F3A000000000002 /* PurchaseManager.swift in Sources */,
 				23A1B0052F3A000000000003 /* PaywallView.swift in Sources */,
+				23A1B0092F3A000000000005 /* OnboardingView.swift in Sources */,
 				23D210192B49BB9D0019F250 /* TimePickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -353,7 +361,7 @@
 		23D210142B45C2F30019F250 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "ExtraMile+/ExtraMile+.entitlements";
 				CODE_SIGN_STYLE = Automatic;
@@ -373,7 +381,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = co.brevinb.ExtraMile;
 				PRODUCT_NAME = ExtraMile;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -385,7 +393,7 @@
 		23D210152B45C2F30019F250 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "ExtraMile+/ExtraMile+.entitlements";
 				CODE_SIGN_STYLE = Automatic;
@@ -405,7 +413,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = co.brevinb.ExtraMile;
 				PRODUCT_NAME = ExtraMile;
 				SWIFT_EMIT_LOC_STRINGS = YES;
