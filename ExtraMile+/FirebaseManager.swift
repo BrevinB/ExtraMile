@@ -12,6 +12,10 @@ import FirebaseAuth
 @Observable class FirebaseManager {
     var runs = [RunModel]()
 
+    #if DEBUG
+    private var isUsingDummyData = false
+    #endif
+
     // MARK: - Computed Stats
 
     var totalMiles: Double {
@@ -190,6 +194,10 @@ import FirebaseAuth
         let query = runEntryRef.whereField("profileId", isEqualTo: profileId)
 
         query.addSnapshotListener { querySnapshot, error in
+            #if DEBUG
+            if self.isUsingDummyData { return }
+            #endif
+
             guard let documents = querySnapshot?.documents else {
                 print("No Documents")
                 return
@@ -244,6 +252,55 @@ import FirebaseAuth
         let db = Firestore.firestore()
         db.collection("RunEntry").document(documentId).updateData(["notes": notes])
     }
+
+    #if DEBUG
+    func loadDummyData() {
+        isUsingDummyData = true
+        let calendar = Calendar.current
+        let today = Date()
+
+        let sampleRuns: [(daysAgo: Int, miles: Double, minutes: Int, seconds: Int, notes: String)] = [
+            (0, 3.12, 25, 18, "Easy morning run"),
+            (1, 5.01, 40, 45, "Tempo run, felt strong"),
+            (2, 4.25, 35, 10, ""),
+            (3, 7.50, 62, 30, "Long run Sunday"),
+            (5, 3.00, 24, 00, "Recovery jog"),
+            (6, 6.20, 49, 36, ""),
+            (8, 4.00, 33, 20, "Hill repeats"),
+            (9, 5.50, 44, 55, "Progression run"),
+            (11, 3.75, 30, 00, ""),
+            (13, 8.00, 66, 40, "Long run"),
+            (14, 3.10, 26, 21, "Shakeout run"),
+            (16, 5.00, 40, 00, "Steady state"),
+            (18, 4.50, 37, 48, ""),
+            (20, 10.02, 85, 10, "Longest run yet!"),
+            (22, 3.25, 27, 18, ""),
+            (25, 6.00, 48, 00, "Fartlek workout"),
+            (28, 4.80, 39, 22, ""),
+            (30, 5.25, 43, 10, ""),
+            (35, 3.50, 29, 45, "First run of the month"),
+            (40, 7.00, 58, 24, ""),
+        ]
+
+        runs = sampleRuns.map { entry in
+            let date = calendar.date(byAdding: .day, value: -entry.daysAgo, to: today)!
+            let totalSeconds = entry.minutes * 60 + entry.seconds
+            return RunModel(
+                miles: entry.miles,
+                time: DateComponents(hour: totalSeconds / 3600, minute: (totalSeconds % 3600) / 60, second: totalSeconds % 60),
+                date: date,
+                profileId: "debug",
+                documentId: "debug-\(entry.daysAgo)",
+                notes: entry.notes
+            )
+        }.sorted { $0.date > $1.date }
+    }
+
+    func clearDummyData() {
+        isUsingDummyData = false
+        runs.removeAll()
+    }
+    #endif
 
     func deleteAccount() {
         let user = Auth.auth().currentUser

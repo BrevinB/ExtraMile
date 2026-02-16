@@ -10,6 +10,7 @@ import FirebaseAuth
 
 struct SettingsView: View {
     @Environment(FirebaseManager.self) private var fbManager
+    @Environment(PurchaseManager.self) private var purchaseManager
     @AppStorage("loginStatus") private var loginStatus: Bool = false
     @AppStorage("mileageGoal") private var mileageGoal: Int = 365
     @AppStorage("weeklyGoal") private var weeklyGoal: Double = 15.0
@@ -20,6 +21,10 @@ struct SettingsView: View {
     @State private var isShowingLogoutAlert = false
     @State private var customGoalText = ""
     @State private var customWeeklyText = ""
+
+    #if DEBUG
+    @State private var debugPremium = false
+    #endif
 
     var body: some View {
         List {
@@ -168,6 +173,10 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            #if DEBUG
+            debugSection
+            #endif
         }
         .navigationTitle("Settings")
         .alert("Log Out?", isPresented: $isShowingLogoutAlert) {
@@ -198,4 +207,37 @@ struct SettingsView: View {
             Text("This action cannot be undone. All your data will be permanently deleted.")
         }
     }
+
+    #if DEBUG
+    private var debugSection: some View {
+        Section {
+            Toggle(isOn: $debugPremium) {
+                Label("Premium Override", systemImage: "crown.fill")
+            }
+            .tint(.yellow)
+            .onChange(of: debugPremium) {
+                purchaseManager.debugOverridePremium = debugPremium
+            }
+            .onAppear {
+                debugPremium = purchaseManager.debugOverridePremium
+            }
+
+            Button {
+                fbManager.loadDummyData()
+            } label: {
+                Label("Load Screenshot Data", systemImage: "photo.on.rectangle")
+            }
+
+            Button(role: .destructive) {
+                fbManager.clearDummyData()
+            } label: {
+                Label("Clear Screenshot Data", systemImage: "trash")
+            }
+        } header: {
+            Label("Debug", systemImage: "ant.fill")
+        } footer: {
+            Text("These options are only visible in debug builds.")
+        }
+    }
+    #endif
 }

@@ -23,6 +23,10 @@ struct SettingsView: View {
     @State private var customWeeklyText = ""
     @State private var showPaywall = false
 
+    #if DEBUG
+    @State private var debugPremium = false
+    #endif
+
     var body: some View {
         List {
             // Premium Banner
@@ -221,32 +225,6 @@ struct SettingsView: View {
                 }
             }
 
-            // App Icons — premium only
-            Section {
-                if purchaseManager.isPremium {
-                    AppIconRow(iconName: nil, displayName: "Default", isSelected: UIApplication.shared.alternateIconName == nil)
-                    AppIconRow(iconName: "AppIconDark", displayName: "Dark", isSelected: UIApplication.shared.alternateIconName == "AppIconDark")
-                    AppIconRow(iconName: "AppIconGold", displayName: "Gold", isSelected: UIApplication.shared.alternateIconName == "AppIconGold")
-                } else {
-                    Button {
-                        showPaywall = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "app.badge.fill")
-                                .foregroundStyle(.yellow)
-                            Text("Alternate App Icons")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "lock.fill")
-                                .font(.caption)
-                                .foregroundStyle(.yellow)
-                        }
-                    }
-                }
-            } header: {
-                Text("App Icon")
-            }
-
             // Account
             Section("Account") {
                 if !purchaseManager.isPremium {
@@ -295,6 +273,10 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            #if DEBUG
+            debugSection
+            #endif
         }
         .navigationTitle("Settings")
         .sheet(isPresented: $showPaywall) {
@@ -328,38 +310,38 @@ struct SettingsView: View {
             Text("This action cannot be undone. All your data will be permanently deleted.")
         }
     }
-}
 
-// MARK: - App Icon Row
-
-struct AppIconRow: View {
-    let iconName: String?
-    let displayName: String
-    let isSelected: Bool
-
-    var body: some View {
-        Button {
-            UIApplication.shared.setAlternateIconName(iconName)
-        } label: {
-            HStack(spacing: 12) {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.yellow.opacity(iconName == nil ? 0.3 : iconName == "AppIconDark" ? 0.1 : 0.6))
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Image(systemName: "figure.run")
-                            .foregroundStyle(iconName == "AppIconDark" ? .white : .black)
-                    )
-
-                Text(displayName)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(.yellow)
-                }
+    #if DEBUG
+    private var debugSection: some View {
+        Section {
+            Toggle(isOn: $debugPremium) {
+                Label("Premium Override", systemImage: "crown.fill")
             }
+            .tint(.yellow)
+            .onChange(of: debugPremium) {
+                purchaseManager.debugOverridePremium = debugPremium
+            }
+            .onAppear {
+                debugPremium = purchaseManager.debugOverridePremium
+            }
+
+            Button {
+                fbManager.loadDummyData()
+            } label: {
+                Label("Load Screenshot Data", systemImage: "photo.on.rectangle")
+            }
+
+            Button(role: .destructive) {
+                fbManager.clearDummyData()
+            } label: {
+                Label("Clear Screenshot Data", systemImage: "trash")
+            }
+        } header: {
+            Label("Debug", systemImage: "ant.fill")
+        } footer: {
+            Text("These options are only visible in debug builds.")
         }
     }
+    #endif
 }
+

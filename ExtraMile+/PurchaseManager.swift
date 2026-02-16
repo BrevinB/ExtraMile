@@ -13,6 +13,12 @@ class PurchaseManager {
     var isPremium: Bool = false
     var offerings: Offerings?
 
+    #if DEBUG
+    var debugOverridePremium: Bool = false {
+        didSet { isPremium = debugOverridePremium }
+    }
+    #endif
+
     init() {
         Task {
             await fetchCustomerInfo()
