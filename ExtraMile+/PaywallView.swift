@@ -118,12 +118,21 @@ struct PaywallView: View {
                     .disabled(isRestoring)
 
                     // Legal footer
-                    Text("Recurring billing. Cancel anytime in Settings > Subscriptions. Payment charged to Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period.")
+                    VStack(spacing: 8) {
+                        Text("Recurring billing. Cancel anytime in Settings > Subscriptions. Payment charged to Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period.")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+
+                        HStack(spacing: 16) {
+                            Link("Privacy Policy", destination: URL(string: "https://brevinb.github.io/ExtraMile-legal/privacy-policy.html")!)
+                            Link("Terms of Use", destination: URL(string: "https://brevinb.github.io/ExtraMile-legal/terms-of-use.html")!)
+                        }
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 20)
+                        .foregroundStyle(.yellow)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
